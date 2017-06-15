@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  # name of deployment
+  name: exec-sdc
+spec:
+  # 3 instances of SDC
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app : exec-sdc
+    spec:
+      containers:
+      - name : exec-sdc
+        # pull sdc-dpm docker image which is present in gcp container registry
+        image: path/to/your/private/image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 18360
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/pre-stop.sh"]
+        volumeMounts:
+        - mountPath: "/var/lib/sdc-resources"
+          name : secret-volume
+          readOnly : true
+        env:
+        - name: ORG
+          value: "your_org"
+        - name: URL
+          value: "https://cloud.streamsets.com"
+        - name: LABELS
+          value: "k8s-exec-sdc"
+      volumes:
+      - name : secret-volume
+        secret :
+          secretName : mysecrets
