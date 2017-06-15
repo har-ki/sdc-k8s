@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: design-sdc
+  labels:
+    app: design-sdc
+spec:
+  ports:
+  - port: 18630
+    name: sdc-port
+    targetPort: 18630
+    protocol: TCP
+  selector:
+    app: design-sdc
+  type: LoadBalancer
