@@ -1,0 +1,77 @@
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1beta1
+metadata:
+  name: default
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+  zone: us-west1-a
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datacollector
+  labels:
+    app: datacollector
+spec:
+  ports:
+  - port: 18630
+    targetPort: 18630
+    name: ui
+  clusterIP: None
+  selector:
+    app: datacollector
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: datacollector
+spec:
+  serviceName: "datacollector"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: datacollector
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+            "name": "init-datacollector-data",
+            "image": "busybox",
+            "command": ["sh", "-c", "chown -R 20159 /data /opt/streamsets-datacollector/streamsets-libs"],
+            "volumeMounts": [
+              {"name": "data", "mountPath": "/data", "subPath": "data"},
+              {"name": "data", "mountPath": "/opt/streamsets-datacollector/streamsets-libs", "subPath": "stagelibs"}
+            ]
+          }
+        ]'
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: datacollector
+        image: streamsets/datacollector
+        ports:
+        - containerPort: 18630
+          name: ui
+        readinessProbe:
+          exec:
+            command: ["curl", "127.0.0.1:18630/public-rest/ping"]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+          subPath: data
+        - name: data
+          mountPath: /opt/streamsets-datacollector/streamsets-libs
+          subPath: stagelibs
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+        volume.alpha.kubernetes.io/storage-class: default
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
