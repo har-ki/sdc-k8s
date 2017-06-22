@@ -27,6 +27,12 @@ spec:
           name : secret-volume
           readOnly : true
         env:
+        - name: HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: PORT0
+          value: "18630"
         - name: ORG
           value: "your_org"
         - name: URL
