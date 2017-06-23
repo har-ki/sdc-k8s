@@ -30,7 +30,7 @@ spec:
         - name: HOST
           valueFrom:
             fieldRef:
-              fieldPath: status.hostIP
+              fieldPath: status.podIP
         - name: PORT0
           value: "18630"
         - name: ORG
