@@ -1,4 +1,5 @@
 #!/bin/bash
+#!/bin/bash
 set -e
 
 # We translate environment variables to sdc.properties and rewrite them.
@@ -32,10 +33,6 @@ for e in $(env); do
   fi
 done
 
-if [[ -z $SDC_LOG ]]; then
-  mkdir -p $SDC_LOG
-fi
-
 # log into dpm, get auth token, register, save and startup sdc
 echo "Login and generate authentication token"
 
@@ -43,23 +40,17 @@ USERNAME=$(cat /var/lib/sdc-resources/dpmuser)
 PASSWORD=$(cat /var/lib/sdc-resources/dpmpassword)
 
 # login to security app
-curl -X POST -d "{\"userName\":\"${USERNAME}\", \"password\": \"${PASSWORD}\"}" ${URL}/security/public-rest/v1/authentication/login --header "Content-Type:application/json" --header "X-Requested-By:SDC" -c cookie.txt
+curl -X POST -d "{\"userName\":\"${USERNAME}\", \"password\": \"${PASSWORD}\"}" ${URL}/security/public-rest/v1/authentication/login --header "Content-Type:application/json" --header "X-Requested-By:SDC" -c /tmp/cookie.txt
 
 # generate auth token from security app
-sessionToken=`sed -n '/SS-SSO-LOGIN/p' cookie.txt | perl -lane 'print $F[$#F]'`
-echo "Generated session token : $sessionToken"
+sessionToken=`sed -n '/SS-SSO-LOGIN/p' /tmp/cookie.txt | perl -lane 'print $F[$#F]'`
 
 touch /tmp/authToken.txt
 
 curl -X PUT -d "{\"organization\": \"${ORG}\", \"componentType\" : \"dc\", \"numberOfComponents\" : 1, \"active\" : true}" ${URL}/security/rest/v1/organization/${ORG}/components --header "Content-Type:application/json" --header "X-Requested-By:SDC" --header "X-SS-REST-CALL:true" --header "X-SS-User-Auth-Token:$sessionToken" > /tmp/authToken.txt
 
-echo "Contents of /tmp/authToken.txt"
-cat /tmp/authToken.txt
-
 # copy app token to sds.properties file
 authToken=`sed -e 's/^.*"fullAuthToken"[ ]*:[ ]*"//' -e 's/".*//' /tmp/authToken.txt`
-
-echo "Generated auth token : $authToken"
 
 echo "Modifying sdc.properties"
 
