@@ -21,7 +21,7 @@ spec:
         lifecycle:
           preStop:
             exec:
-              command: ["/pre-stop.sh"]
+              command: ["/tmp/pre-stop.sh"]
         volumeMounts:
         - mountPath: "/var/lib/sdc-resources"
           name : secret-volume

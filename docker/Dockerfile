@@ -87,6 +87,9 @@ RUN chown -R "${SDC_USER}:${SDC_USER}" "${SDC_DIST}/streamsets-libs" \
     "${SDC_RESOURCES}" \
     "${STREAMSETS_LIBRARIES_EXTRA_DIR}"
 
+COPY pre-stop.sh /tmp/
+RUN chmod +x /tmp/pre-stop.sh
+
 USER ${SDC_USER}
 EXPOSE 18630
 COPY docker-entrypoint.sh /
